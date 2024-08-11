@@ -1097,8 +1097,6 @@ bool Im3d::GizmoScale(Id _id, float _scale_[3])
 	Vec3* outVec3 = (Vec3*)_scale_;
 	const AppData& appData = ctx.getAppData();
 
-	float planeSize = worldHeight * (0.5f * 0.5f);
-	float planeOffset = worldHeight * 0.5f;
 	float worldSize = ctx.pixelsToWorldSize(origin, ctx.m_gizmoSizePixels);
 
 	struct AxisG { Id m_id; Vec3 m_axis; Color m_color; };
@@ -1138,7 +1136,7 @@ bool Im3d::GizmoScale(Id _id, float _scale_[3])
 		{
 			Sphere handle(origin, ctx.pixelsToWorldSize(origin, ctx.m_gizmoSizePixels * 4.0f));
 			float t0, t1;
-			bool intersects = Intersect(ray, handle, t0, t1);
+			bool hit = Intersect(ray, handle, t0, t1);
 			Vec3& storedScale = ctx.m_gizmoStateVec3;
 			Vec3& storedPosition = *((Vec3*)ctx.m_gizmoStateMat3.m);
 			if (uniformId == ctx.m_activeId)
@@ -1162,7 +1160,7 @@ bool Im3d::GizmoScale(Id _id, float _scale_[3])
 			}
 			else if (uniformId == ctx.m_hotId)
 			{
-				if (intersects)
+				if (hit)
 				{
 					if (ctx.isKeyDown(Action_Select))
 					{
@@ -1180,7 +1178,7 @@ bool Im3d::GizmoScale(Id _id, float _scale_[3])
 			else
 			{
 			 	float depth = Length2(origin - appData.m_viewOrigin);
-				ctx.makeHot(uniformId, depth, intersects);
+				ctx.makeHot(uniformId, depth, hit);
 			}
 		}
 
@@ -2375,7 +2373,7 @@ bool Context::gizmoAxisTranslation_Behavior(Id _id, const Vec3& _origin, const V
 	return false;
 }
 
-void Context::gizmoAxisTranslation_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldHeight, float _worldSize, Color _color)
+void Context::gizmoAxisTranslation_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldHeight, [[maybe_unused]] float _worldSize, Color _color)
 {
 	Vec3 viewDir = m_appData.m_projOrtho
 		? m_appData.m_viewDirection
@@ -2542,7 +2540,6 @@ bool Context::gizmoAxislAngle_Behavior(Id _id, const Vec3& _origin, const Vec3& 
 
 	Vec3& storedVec = m_gizmoStateVec3;
 	float& storedAngle = m_gizmoStateFloat;
-	bool ret = false;
 
  // use a view-aligned plane intersection to generate the rotation delta
 	Plane viewPlane(viewDir, _origin);
@@ -2592,7 +2589,7 @@ bool Context::gizmoAxislAngle_Behavior(Id _id, const Vec3& _origin, const Vec3& 
 	}
 	return false;
 }
-void Context::gizmoAxislAngle_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldRadius, float _angle, Color _color, float _minAlpha)
+void Context::gizmoAxislAngle_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldRadius, [[maybe_unused]] float _angle, Color _color, float _minAlpha)
 {
 	Vec3 viewDir = m_appData.m_projOrtho
 		? m_appData.m_viewDirection
@@ -2600,7 +2597,6 @@ void Context::gizmoAxislAngle_Draw(Id _id, const Vec3& _origin, const Vec3& _axi
 		;
 	float aligned = fabs(Dot(_axis, viewDir));
 
-	Vec3& storedVec = m_gizmoStateVec3;
 	Color color = _color;
 
 	if (_id == m_activeId)
@@ -2743,7 +2739,7 @@ bool Context::gizmoAxisScale_Behavior(Id _id, const Vec3& _origin, const Vec3& _
 
 	return false;
 }
-void Context::gizmoAxisScale_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldHeight, float _worldSize, Color _color)
+void Context::gizmoAxisScale_Draw(Id _id, const Vec3& _origin, const Vec3& _axis, float _worldHeight, [[maybe_unused]] float _worldSize, Color _color)
 {
 	Vec3 viewDir = m_appData.m_projOrtho
 		? m_appData.m_viewDirection
@@ -3348,17 +3344,13 @@ float Im3d::Distance2(const Ray& _ray, const LineSegment& _segment)
 	return Length2(_ray.m_origin + _ray.m_direction * tr - p);
 }
 
-#define IM3D_STATIC_ASSERT(e) { (void)sizeof(char[(e) ? 1 : -1]); }
-static void StaticAsserts()
-{
-	IM3D_STATIC_ASSERT(sizeof (Vec2) == sizeof (float[2]));
-	IM3D_STATIC_ASSERT(alignof(Vec2) == alignof(float[2]));
-	IM3D_STATIC_ASSERT(sizeof (Vec3) == sizeof (float[3]));
-	IM3D_STATIC_ASSERT(alignof(Vec3) == alignof(float[3]));
-	IM3D_STATIC_ASSERT(sizeof (Vec4) == sizeof (float[4]));
-	IM3D_STATIC_ASSERT(alignof(Vec4) == alignof(float[4]));
-	IM3D_STATIC_ASSERT(sizeof (Mat3) == sizeof (float[9]));
-	IM3D_STATIC_ASSERT(alignof(Mat3) == alignof(float[9]));
-	IM3D_STATIC_ASSERT(sizeof (Mat4) == sizeof (float[16]));
-	IM3D_STATIC_ASSERT(alignof(Mat4) == alignof(float[16]));
-}
+static_assert(sizeof (Vec2) == sizeof (float[2]));
+static_assert(alignof(Vec2) == alignof(float[2]));
+static_assert(sizeof (Vec3) == sizeof (float[3]));
+static_assert(alignof(Vec3) == alignof(float[3]));
+static_assert(sizeof (Vec4) == sizeof (float[4]));
+static_assert(alignof(Vec4) == alignof(float[4]));
+static_assert(sizeof (Mat3) == sizeof (float[9]));
+static_assert(alignof(Mat3) == alignof(float[9]));
+static_assert(sizeof (Mat4) == sizeof (float[16]));
+static_assert(alignof(Mat4) == alignof(float[16]));
